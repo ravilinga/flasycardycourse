@@ -1,0 +1,43 @@
+---
+description: shadcn/ui usage guidelines for all UI components
+alwaysApply: true
+---
+
+# shadcn/ui Components
+
+This project uses **shadcn/ui** for all UI elements. Never use raw HTML elements or other UI libraries when a shadcn/ui component is available.
+
+## Initialization
+
+If shadcn/ui is not yet initialized in the project, run:
+
+```bash
+npx shadcn@latest init
+```
+
+## Adding Components
+
+If a component is not installed, add it before using it:
+
+```bash
+npx shadcn@latest add <component-name>
+```
+
+Examples:
+```bash
+npx shadcn@latest add button
+npx shadcn@latest add input
+npx shadcn@latest add card
+```
+
+## Usage
+
+Import components from `@/components/ui/`:
+
+```tsx
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+```
+
+- Always check if a shadcn/ui component exists before building a custom one
+- Do not install or use other UI libraries (e.g. MUI, Chakra, Ant Design) for components shadcn/ui covers
