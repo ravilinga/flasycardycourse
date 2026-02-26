@@ -1,0 +1,44 @@
+---
+alwaysApply: true
+---
+# Database: Drizzle ORM
+
+All database interactions must use the Drizzle ORM client and schema defined in `src/db/`.
+
+## Setup
+
+- **Client**: `db` exported from [src/db/index.ts](mdc:src/db/index.ts)
+- **Schema**: `decks` and `cards` tables exported from [src/db/schema.ts](mdc:src/db/schema.ts)
+
+## Rules
+
+- Never use raw SQL strings or other query builders (e.g. no `pg`, `prisma`, `knex`)
+- Always import `db` from `@/db` and table schemas from `@/db/schema`
+- Use Drizzle's query API (`db.select`, `db.insert`, `db.update`, `db.delete`, or `db.query.*`)
+
+## Examples
+
+```ts
+// ✅ GOOD - Drizzle query
+import { db } from "@/db";
+import { decks, cards } from "@/db/schema";
+import { eq } from "drizzle-orm";
+
+const userDecks = await db.select().from(decks).where(eq(decks.clerkUserId, userId));
+
+// ✅ GOOD - relational query
+const deckWithCards = await db.query.decks.findFirst({
+  where: eq(decks.id, deckId),
+  with: { cards: true },
+});
+
+// ✅ GOOD - insert
+await db.insert(cards).values({ deckId, front, back });
+
+// ❌ BAD - raw SQL
+const result = await sql`SELECT * FROM decks WHERE clerk_user_id = ${userId}`;
+
+// ❌ BAD - wrong import path or ad-hoc client
+import { drizzle } from "drizzle-orm/neon-http";
+const myDb = drizzle(...);
+```

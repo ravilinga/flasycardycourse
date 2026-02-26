@@ -1,0 +1,59 @@
+---
+description: Server actions and data validation standards
+alwaysApply: true
+---
+
+# Server Actions & Data Validation
+
+All data retrieval and mutations must use **Next.js Server Actions**. Never fetch data directly from client components.
+
+## Server Actions
+
+All database operations (select, insert, update, delete) must be performed inside server actions.
+
+```ts
+"use server";
+
+import { db } from "@/db";
+import { flashcardDecks } from "@/db/schema";
+import { auth } from "@clerk/nextjs/server";
+
+export async function getDecks() {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  return db.select().from(flashcardDecks).where(eq(flashcardDecks.userId, userId));
+}
+```
+
+## Data Validation with Zod
+
+All data passed into a server action **must** be validated with Zod before use.
+
+```ts
+// ❌ BAD — no validation, unsafe types
+export async function createDeck(data: FormData) { ... }
+
+// ✅ GOOD — typed input, validated with Zod
+import { z } from "zod";
+
+const CreateDeckSchema = z.object({
+  title: z.string().min(1).max(100),
+  description: z.string().optional(),
+});
+
+type CreateDeckInput = z.infer<typeof CreateDeckSchema>;
+
+export async function createDeck(input: CreateDeckInput) {
+  const parsed = CreateDeckSchema.parse(input);
+  // use parsed.title, parsed.description safely
+}
+```
+
+## Key Rules
+
+- Always use `"use server"` at the top of server action files
+- Never use `FormData` as a parameter type — use typed objects instead
+- Define a Zod schema for every server action that accepts input
+- Derive TypeScript types from Zod schemas using `z.infer<typeof Schema>`
+- Call `schema.parse()` (throws on failure) or `schema.safeParse()` (returns result object) before accessing any input data

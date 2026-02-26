@@ -1,0 +1,42 @@
+---
+alwaysApply: true
+---
+# Authentication & Authorization
+
+All authentication is handled by **Clerk**. Never implement custom auth logic.
+
+## Getting the Current User
+
+Use Clerk's server-side helpers to get the authenticated user:
+
+```ts
+import { auth } from "@clerk/nextjs/server";
+
+const { userId } = await auth();
+if (!userId) throw new Error("Unauthorized");
+```
+
+## Data Access Rules
+
+**Users must only access their own data.** Always scope database queries to the authenticated `userId`.
+
+```ts
+// ❌ BAD — no user scoping
+const decks = await db.select().from(flashcardDecks);
+
+// ✅ GOOD — scoped to current user
+const { userId } = await auth();
+if (!userId) throw new Error("Unauthorized");
+
+const decks = await db
+  .select()
+  .from(flashcardDecks)
+  .where(eq(flashcardDecks.userId, userId));
+```
+
+## Key Rules
+
+- Always check `userId` before any DB read or write
+- Every table that holds user data must have a `userId` column
+- Never expose another user's data — even by accident via a shared ID in the URL
+- Validate ownership before updates/deletes (re-query with `userId` filter, don't trust client-supplied IDs alone)
