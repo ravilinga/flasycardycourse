@@ -1,19 +1,9 @@
 import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
-export const users = pgTable("users", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  clerkId: text("clerk_id").notNull().unique(),
-  email: text("email").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
 export const decks = pgTable("decks", {
   id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  clerkUserId: text("clerk_user_id").notNull(),
   title: text("title").notNull(),
   description: text("description"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -31,12 +21,7 @@ export const cards = pgTable("cards", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const usersRelations = relations(users, ({ many }) => ({
-  decks: many(decks),
-}));
-
-export const decksRelations = relations(decks, ({ one, many }) => ({
-  user: one(users, { fields: [decks.userId], references: [users.id] }),
+export const decksRelations = relations(decks, ({ many }) => ({
   cards: many(cards),
 }));
 
