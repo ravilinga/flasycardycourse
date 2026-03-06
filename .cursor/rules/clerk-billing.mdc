@@ -1,0 +1,81 @@
+---
+alwaysApply: true
+---
+# Clerk Billing & Subscriptions
+
+All subscription and payment logic is handled by **Clerk Billing**. Never implement custom billing or payment logic.
+
+## Plans & Features
+
+**Plans:**
+- `free_plan` — default free tier
+- `pro` — paid plan
+
+**Features:**
+- `5_deck_limit` — user is capped at 5 decks
+- `unlimited_decks` — user can create unlimited decks
+- `ai_flash_card_generation` — user can generate cards with AI
+
+## Checking Access (Server-Side)
+
+Use `has()` from the `auth()` object to gate access in Server Components and Server Actions:
+
+```ts
+import { auth } from '@clerk/nextjs/server'
+
+const { has } = await auth()
+
+// Check by plan
+const isPro = has({ plan: 'pro' })
+
+// Check by feature
+const canUseAI = has({ feature: 'ai_flash_card_generation' })
+const hasUnlimitedDecks = has({ feature: 'unlimited_decks' })
+```
+
+## Checking Access (Client-Side)
+
+Use the `<Show>` component to conditionally render UI based on plan or feature:
+
+```tsx
+import { Show } from '@clerk/nextjs'
+
+// Gate by feature
+<Show
+  when={{ feature: 'ai_flash_card_generation' }}
+  fallback={<p>Upgrade to Pro to use AI generation.</p>}
+>
+  <AIGenerateButton />
+</Show>
+
+// Gate by plan
+<Show
+  when={{ plan: 'pro' }}
+  fallback={<p>This feature is available on the Pro plan.</p>}
+>
+  <ProOnlyFeature />
+</Show>
+```
+
+## Pricing Page
+
+Use the `<PricingTable />` component for the pricing page:
+
+```tsx
+import { PricingTable } from '@clerk/nextjs'
+
+export default function PricingPage() {
+  return (
+    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '0 1rem' }}>
+      <PricingTable />
+    </div>
+  )
+}
+```
+
+## Key Rules
+
+- Never use custom payment or subscription logic — always use Clerk Billing
+- Always use `has()` on the server and `<Show>` on the client for access control
+- Gate deck creation behind `unlimited_decks` feature; enforce 5-deck cap for `5_deck_limit`
+- Gate AI card generation behind `ai_flash_card_generation` feature

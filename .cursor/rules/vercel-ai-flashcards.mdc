@@ -1,0 +1,40 @@
+---
+alwaysApply: true
+---
+# AI Flashcard Generation
+
+All AI features use the **Vercel AI SDK** (`ai`) with the **OpenAI provider** (`@ai-sdk/openai`). Never use the `openai` npm package directly or any other AI client.
+
+## Generating Flashcards (Structured Output)
+
+Use `generateText` with `Output.object()` and a Zod schema to produce typed flashcard arrays:
+
+```ts
+import { generateText, Output } from 'ai';
+import { openai } from '@ai-sdk/openai';
+import { z } from 'zod';
+
+const FlashcardsSchema = z.object({
+  cards: z.array(
+    z.object({
+      front: z.string(),
+      back: z.string(),
+    })
+  ),
+});
+
+const { output } = await generateText({
+  model: openai('gpt-4o'),
+  output: Output.object({ schema: FlashcardsSchema }),
+  prompt: `Generate 10 flashcards about: ${topic}`,
+});
+
+// output.cards is fully typed: { front: string; back: string }[]
+```
+
+## Key Rules
+
+- Always use `Output.object({ schema })` — never parse raw text manually
+- Gate this feature behind the `ai_flash_card_generation` feature check (`has({ feature: 'ai_flash_card_generation' })` server-side, `<Show when={{ feature: 'ai_flash_card_generation' }}>` client-side)
+- Call AI generation inside a **server action** (`"use server"`) — never from the client directly
+- Validate any user-supplied input (e.g. topic/prompt) with Zod before passing to the model
